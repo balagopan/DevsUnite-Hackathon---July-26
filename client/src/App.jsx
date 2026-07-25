@@ -14,6 +14,19 @@ function App() {
     setFiles(Array.from(e.target.files));
   };
 
+  const handleDownload = () => {
+    if (!markdown) return;
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'DOCUMENTATION.md');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleGenerate = async () => {
     if (files.length === 0) {
       setError('Please select or drop files first.');
@@ -43,7 +56,7 @@ function App() {
   };
 
   return (
-    <div style={{ maxWidth: '900px', margin: '40px auto', fontFamily: 'Arial, sans-serif', padding: '20px' }}>
+    <div style={{ maxWidth: '900px', margin: '40px auto', fontFamily: 'Arial, sans-serif', padding: '20px', textAlign: 'center' }}>
       <h1>Documentation Generator</h1>
       <p>Drag and drop your Python project files below to automatically generate comprehensive documentation.</p>
 
@@ -122,28 +135,53 @@ function App() {
         </p>
       </div>
 
-      <button 
-        onClick={handleGenerate} 
-        disabled={loading}
-        style={{
-          backgroundColor: '#4A90E2',
-          color: 'white',
-          padding: '10px 20px',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer',
-          fontSize: '16px'
-        }}
-      >
-        {loading ? 'Generating Documentation...' : 'Generate Documentation'}
-      </button>
+      {/* Button Controls */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+        <button 
+          onClick={handleGenerate} 
+          disabled={loading}
+          style={{
+            backgroundColor: '#4A90E2',
+            color: 'white',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontSize: '16px'
+          }}
+        >
+          {loading ? 'Generating Documentation...' : 'Generate Documentation'}
+        </button>
+
+        <button
+          onClick={handleDownload}
+          disabled={!markdown}
+          style={{
+            backgroundColor: markdown ? '#2da44e' : '#cccccc',
+            color: markdown ? 'white' : '#7a7a7a',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: markdown ? 'pointer' : 'not-allowed',
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: markdown ? '0 4px 12px rgba(45, 164, 78, 0.2)' : 'none',
+            transition: 'all 0.3s ease' // Adds a smooth "bright up" animation
+          }}
+        >
+          📥 Download Documentation (.md)
+        </button>
+      </div>
 
       {error && <p style={{ color: 'red', marginTop: '15px' }}>{error}</p>}
 
       {markdown && (
-        <div style={{ 
+        <div className="markdown-container" style={{ 
           maxWidth: '850px', 
-          margin: '40px auto', 
+          margin: '40px auto 20px auto', 
           padding: '40px', 
           border: '1px solid #d0d7de', 
           borderRadius: '6px', 
@@ -151,17 +189,44 @@ function App() {
           color: '#24292f',
           textAlign: 'left',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
-          boxShadow: '0 8px 24px rgba(140, 149, 159, 0.2)'
+          boxShadow: '0 8px 24px rgba(140, 149, 159, 0.2)',
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
+          {/* Injecting a targeted style block to forcefully override any App.css dark mode rules */}
+          <style>{`
+            .markdown-container h1, 
+            .markdown-container h2, 
+            .markdown-container h3 {
+              color: #24292f !important;
+            }
+          `}</style>
+
+          {/* Clean Top Header */}
+          <div style={{ 
+            borderBottom: '1px solid #eaecef', 
+            paddingBottom: '16px', 
+            marginBottom: '24px',
+            width: '100%' 
+          }}>
+            <div style={{ 
+              margin: 0, 
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: '#24292f'
+            }}>
+              Generated Documentation
+            </div>
+          </div>
+
+          {/* The Actual Documentation */}
           <div style={{ lineHeight: '1.6', fontSize: '16px' }}>
             <ReactMarkdown
               components={{
-                // Style headers to look like GitHub Markdown headings
                 h1: ({node, children}) => <h1 style={{ borderBottom: '1px solid #eaecef', paddingBottom: '.3em', fontSize: '2em', marginTop: '0', marginBottom: '16px', fontWeight: '600' }}>{children}</h1>,
                 h2: ({node, children}) => <h2 style={{ borderBottom: '1px solid #eaecef', paddingBottom: '.3em', fontSize: '1.5em', marginTop: '24px', marginBottom: '16px', fontWeight: '600' }}>{children}</h2>,
                 h3: ({node, children}) => <h3 style={{ fontSize: '1.25em', marginTop: '24px', marginBottom: '16px', fontWeight: '600' }}>{children}</h3>,
                 
-                // Style inline code to look like GitHub's small code chips
                 code({ node, inline, children, ...props }) {
                   return inline ? (
                     <code style={{ 
@@ -176,12 +241,11 @@ function App() {
                     </code>
                   ) : (
                     <pre style={{ background: '#f6f8fa', padding: '16px', borderRadius: '6px', overflowX: 'auto', border: '1px solid #e1e4e8' }}>
-                      <code {...props}>{children}</code>
+                      <code style={{ color: '#24292f' }} {...props}>{children}</code>
                     </pre>
                   );
                 },
                 
-                // Style horizontal rules like GitHub
                 hr: () => <hr style={{ height: '0.25em', padding: '0', margin: '24px 0', backgroundColor: '#e1e4e8', border: '0' }} />
               }}
             >
