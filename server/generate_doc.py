@@ -77,7 +77,7 @@ def vallidator_node(state):
 
     if response.status=="approved" or current_count>1:
         return Command(
-            goto="Finalizer"
+            goto="finalizer"
         )
     else:
         analysis=f"The analysis of the documentation are as follows:\nAras to preserve:\n{response.strengths}\n\nAreas to improve:\n{response.weakness}"
@@ -98,7 +98,7 @@ def finalizer_node(state):
     finalizer_chain=finalizer_prompt | llm.with_structured_output(schema=content)
     finalized_document=finalizer_chain.invoke(state)
     return Command(
-        update={"messages":finalized_document},
+        update={"messages":finalized_document.content},
         goto=END
     )
 

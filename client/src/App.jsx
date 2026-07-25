@@ -47,9 +47,9 @@ function App() {
     });
 
     try {
-      const response = await axios.post('http://localhost:8000/api/generate-docs', formData, {
+      const response = await axios.post('/api/generate-docs', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    });
       setMarkdown(response.data.markdown);
     } catch (err) {
       setError(err.response?.data?.detail || 'An error occurred during generation.');
